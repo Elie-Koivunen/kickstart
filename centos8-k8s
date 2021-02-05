@@ -1,0 +1,172 @@
+#platform=x86, AMD64, or Intel EM64T
+#version=DEVEL
+firewall --disabled
+install
+# Use FTP installation media
+url --url="ftp://192.168.255.5/pub/"
+# Root password
+rootpw --iscrypted $6$SEIDDz9bkRRLBnzs$PcFSSReM/9fkNcASnNHtsv5b7PpYKMv1vtxf0maKZDkkMc..6sqFPMula1y.FHcVSvZGBQ1hlGQmX./i.1ziN/
+# System authorization information
+auth useshadow passalgo=sha512
+# Use graphical install
+graphical
+firstboot disable
+keyboard --vckeymap=fi --xlayouts='fi'
+lang en_US.UTF-8
+selinux disabled
+logging level=info
+timezone Europe/Helsinki --isUtc --ntpservers=192.168.255.5,0.centos.pool.ntp.org
+services --disabled="chronyd"
+user --name=mandalorian --plaintext --password a --groups=wheel --gecos="mandalorian"
+user --name=q8s --plaintext --password a --groups=wheel --gecos="mandalorian"
+
+bootloader --location=mbr --boot-drive=sda
+autopart --type=lvm
+clearpart --none --initlabel
+%packages
+@^minimal
+@core
+ntpdate
+ntp
+wget
+screen
+openssh-clients
+open-vm-tools
+bind-utils
+traceroute
+curl
+net-tools
+screen
+expect
+iptraf
+nmap
+nfs-utils
+cifs-utils
+dstat
+%end
+
+%addon com_redhat_kdump --disable --reserve-mb='auto'
+%end
+
+%pre
+
+udevadm settle
+dmsetup remove_all
+
+# De-activate any exiting Volume Groups
+vgchange -an system
+vgchange -an os
+
+# Clear software raid devices if any
+raid_devices=$(mktemp /tmp/mdstat.XXXXXXXXX)
+cat /proc/mdstat | grep ^md | cut -d : -f 1 > $raid_devices
+
+if [ -s $raid_devices ];then
+   for raid in `cat $raid_devices`;do
+       wipefs -f -a /dev/$raid
+       mdadm --stop -f /dev/$raid
+       if [ $? != "0" ];then
+          udevadm settle
+          dmsetup remove_all
+          mdadm --stop -f /dev/$raid
+       fi
+   done
+else
+   echo "All raid devices are cleared"
+fi
+
+rm -vf $raid_devices
+
+# Wipe any partitions if found
+available_disks=$(mktemp /tmp/disks.XXXXXXXXX)
+ls -r /dev/sd* > $available_disks
+
+for disk in `cat $available_disks`;do
+   wipefs -f -a $disk
+done
+
+rm -vf $available_disks
+
+%end
+
+
+%post
+
+# modify host
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+
+# disable firewalld
+systemctl disable firewalld
+systemctl stop firewalld
+
+# disable swap
+sed -i '/swap/d' /etc/fstab
+swapoff -a
+
+# set timezone
+sed -i 's/server 0.centos.pool.ntp.org iburst//g' /etc/ntp.conf
+systemctl stop chronyd
+systemctl disable chronyd
+timedatectl set-timezone Europe/Helsinki
+timedatectl set-ntp true
+timedatectl set-ntp
+systemctl enable ntpd
+systemctl start ntpd
+
+
+
+# modify SSH
+echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+echo "UseDNS no" >> /etc/ssh/sshd_config
+sed -i 's/^#\(ClientAliveInterval\).*$/\1 180/g' /etc/ssh/sshd_config
+mkdir -m 700 -p /root/.ssh
+chown 0:0 /root/.ssh
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC5gqTK4EhAAvz9/Q0t2b42LUxQ/PoaX8cKdyBWNwgWSF5QorEDGv+ZqUh6ErQDZ+EnSibVqUsn3zGt4lzQI1LunlaTkJ0uvqsU+2AXuI8cI7mYiT5uZM49lAG4TnqOoMlETMqSQ3mCv4sFDBuChGi/ThYNQT7Ll+cKIPBR5cbv6WUT7yAc2LztmSS0CXjv6gl2Uf4SWxq2CqSMGgqxkS/w8BIstZ6fDKX+WbChUxxRPoqj6vHgRjRws/dgPMZGmMywyqsGo1TIbt/6+DMwCiNjsaxxS23VWOQ7a2UVTffQYH9zCzybWTJDDpm2CP35ZatRDpTs1TgBlw6bZ9wCRGvb root@netservices" > /root/.ssh/authorized_keys
+
+#set grub timeout
+sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=1/g' /etc/default/grub
+grub2-mkconfig -o /boot/grub2/grub.cfg
+
+# disable ipv6
+echo "NETWORKING_IPV6=no" >> /etc/sysconfig/network
+echo "IPV6INIT=no" >> /etc/sysconfig/network
+echo "net.ipv6.conf.default.disable_ipv6=1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.all.disable_ipv6=1" >> /etc/sysctl.conf
+sed -i 's/IPV6INIT=yes/IPV6INIT=no/g' /etc/sysconfig/network-scripts/ifcfg-ens33
+
+# disable network zeroconf
+echo "NOZEROCONF=yes" >> /etc/sysconfig/network
+
+# setup k8s repo
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+
+#install missing packages
+yum --enablerepo=extras install epel-release -y
+yum -y install epel-release-7
+yum -y install ntpdate ntp wget screen openssh-clients open-vm-tools bind-utils traceroute ansible curl  net-tools  screen  iftop  iostat  iozone  iperf  expect  iptraf netcat nmap nfs-utils cifs-utils dstat htop bind-utils tree
+yum -y nfs-utils.x86_64 nfs4-acl-tools.x86_64 nfsometer.noarch nfstest.noarchlibnfs-utils.x86_64
+
+# k8s pkgs and services
+yum install -y kubelet kubeadm kubectl
+systemctl enable kubelet
+systemctl start kubelet
+
+
+yum -y update
+yum makecache fast
+
+#hostnamectl set-hostname CLEAN-INSTALL
+#hostnamectl set-hostname node-`cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 3 | head -n 1`
+echo "k8s-`cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 3 | head -n 1`.lab.scape" > /etc/hostname
+
+%end
+reboot
