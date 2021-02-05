@@ -101,12 +101,16 @@ systemctl disable firewalld
 systemctl stop firewalld
 
 # set timezone
-timedatectl set-timezone Europe/Helsinki
-# disable chronyd
+sed -i 's/server 0.centos.pool.ntp.org iburst//g' /etc/ntp.conf
 systemctl stop chronyd
 systemctl disable chronyd
+timedatectl set-timezone Europe/Helsinki
+timedatectl set-ntp true
 timedatectl set-ntp
 systemctl enable ntpd
+systemctl start ntpd
+
+
 
 # modify SSH
 echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
@@ -136,11 +140,11 @@ yum -y install epel-release-7
 yum -y install ntpdate ntp wget screen openssh-clients open-vm-tools bind-utils traceroute ansible curl  net-tools  screen  iftop  iostat  iozone  iperf  expect  iptraf netcat nmap nfs-utils cifs-utils dstat htop bind-utils tree
 yum -y update
 yum makecache fast
-
+yum -y nfs-utils.x86_64 nfs4-acl-tools.x86_64 nfsometer.noarch nfstest.noarchlibnfs-utils.x86_64
 
 #hostnamectl set-hostname CLEAN-INSTALL
 #hostnamectl set-hostname node-`cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 3 | head -n 1`
-echo "node-`cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 3 | head -n 1`.lab.scape" > /etc/hostname
+echo "lnx-`cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 3 | head -n 1`.lab.scape" > /etc/hostname
 
 %end
 reboot
