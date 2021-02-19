@@ -18,7 +18,7 @@ logging level=info
 timezone Europe/Helsinki --isUtc --ntpservers=192.168.255.5,0.centos.pool.ntp.org
 services --disabled="chronyd"
 user --name=mandalorian --plaintext --password a --groups=wheel --gecos="mandalorian"
-user --name=q8s --plaintext --password a --groups=wheel --gecos="mandalorian"
+user --name=adm --plaintext --password a --groups=wheel --gecos="adm"
 
 bootloader --location=mbr --boot-drive=sda
 autopart --type=lvm
