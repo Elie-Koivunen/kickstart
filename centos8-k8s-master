@@ -114,7 +114,8 @@ timedatectl set-ntp
 systemctl enable ntpd
 systemctl start ntpd
 
-
+# add to sudoers
+echo "foreman  ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # modify SSH
 echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
