@@ -120,6 +120,7 @@ sed -i 's/^#\(ClientAliveInterval\).*$/\1 180/g' /etc/ssh/sshd_config
 mkdir -m 700 -p /root/.ssh
 chown 0:0 /root/.ssh
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC5gqTK4EhAAvz9/Q0t2b42LUxQ/PoaX8cKdyBWNwgWSF5QorEDGv+ZqUh6ErQDZ+EnSibVqUsn3zGt4lzQI1LunlaTkJ0uvqsU+2AXuI8cI7mYiT5uZM49lAG4TnqOoMlETMqSQ3mCv4sFDBuChGi/ThYNQT7Ll+cKIPBR5cbv6WUT7yAc2LztmSS0CXjv6gl2Uf4SWxq2CqSMGgqxkS/w8BIstZ6fDKX+WbChUxxRPoqj6vHgRjRws/dgPMZGmMywyqsGo1TIbt/6+DMwCiNjsaxxS23VWOQ7a2UVTffQYH9zCzybWTJDDpm2CP35ZatRDpTs1TgBlw6bZ9wCRGvb root@netservices" > /root/.ssh/authorized_keys
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDffmuXBlgdxYstsEoXRjsZ79xwqDqGqBgsykeEQgALPLkgX/M4iPs371Sm9RS9hE+2jfYrX5BVjstTlQSVj3AzvWZIN/1QJyQmpH7mQL+1OlqD7v1nAjcxMOcZvQJ7XwAxaXcBM78e7r6fDYZfjogP3eyOm6rB30TvCCrz6pXp9B2Alx7dDGCEgSzNmUHGMHf3nEcETfmXvgHNHuKbePYmr7p5xfUgJehc3jdvwdCLQmuIFcWN3rhECs7SyA3j8zyzRvWzk2tD8SJTjtjn+bcGnpB4Ujy8SLXDhGh5RqyamQ0TM3KTSgYfnyld35tNDOi9OaATakQIzh3b/spSOYJX foreman@netservices.lab.scape" > /home/foreman/.ssh/authorized_keys
 
 #set grub timeout
 sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=1/g' /etc/default/grub
