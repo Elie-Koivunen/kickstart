@@ -157,6 +157,33 @@ yum -y install epel-release-7
 yum -y install ntpdate ntp wget screen openssh-clients open-vm-tools bind-utils traceroute ansible curl  net-tools  screen  iftop  iostat  iozone mussh  iperf  expect  iptraf netcat nmap portmap nfs-utils cifs-utils dstat htop bind-utils tree  httpie
 yum -y nfs-utils.x86_64 nfs4-acl-tools.x86_64 nfsometer.noarch nfstest.noarchlibnfs-utils.x86_64
 
+
+#install missing packages
+yum --enablerepo=extras install epel-release -y
+yum -y install epel-release-7
+yum -y install ntpdate ntp wget screen openssh-clients open-vm-tools bind-utils traceroute ansible curl  net-tools  screen  iftop  iostat  iozone  iperf  expect mussh iptraf netcat nmap portmap nfs-utils cifs-utils dstat htop bind-utils tree  httpie
+yum -y nfs-utils.x86_64 nfs4-acl-tools.x86_64 nfsometer.noarch nfstest.noarchlibnfs-utils.x86_64
+
+# deploy decoker and k8s dependencies
+yum install -y yum-utils device-mapper-persistent-data lvm2
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum install -y docker
+systemctl start docker
+systemctl enable docker
+systemctl enable firewalld
+systemctl start firewalld
+systemctl status firewalld
+sysctl -w net.ipv4.ip_forward=1
+echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.d/ip_forward.conf
+echo "zone=public" >> /etc/sysconfig/network-scripts/ifcfg-ens33
+firewall-cmd --permanent --zone=public --change-interface=ens33
+firewall-cmd --permanent --zone=public --add-service=ssh
+firewall-cmd --permanent --zone=public --add-service=dhcpv6-client
+firewall-cmd --permanent --zone=public --add-port=6443/tcp
+firewall-cmd --permanent --zone=public --add-port=10250/tcp
+
+kubeadm init
+
 # k8s pkgs and services
 yum install -y kubelet kubeadm kubectl
 systemctl enable kubelet
