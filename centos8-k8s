@@ -191,7 +191,7 @@ yum makecache fast
 #hostnamectl set-hostname node-`cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 3 | head -n 1`
 echo "k8s-`cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 3 | head -n 1`.lab.scape" > /etc/hostname
 
-# setup k8s
+# setup k8s worker
 yum install -y yum-utils device-mapper-persistent-data lvm2
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 yum install -y docker
