@@ -139,8 +139,8 @@ echo "NOZEROCONF=yes" >> /etc/sysconfig/network
 #install missing packages
 yum --enablerepo=extras install epel-release -y
 yum -y install epel-release-7
-yum -y install ntpdate ntp wget screen openssh-clients open-vm-tools bind-utils traceroute ansible curl  net-tools  screen  iftop  iostat  iozone  iperf  expect  iptraf netcat nmap mussh portmap nfs-utils cifs-utils dstat htop bind-utils tree httpie lsof
-
+yum -y install ntpdate ntp wget screen openssh-clients open-vm-tools bind-utils traceroute ansible curl  net-tools  screen  iftop  iostat  iozone  iperf  expect  iptraf netcat nmap mussh portmap nfs-utils cifs-utils dstat htop bind-utils tree httpie lsof strace
+ 
 # speed up deployment by skipping updates
 # yum -y update
 # yum makecache fast
